@@ -36,7 +36,7 @@ mern-order-system/
 │   │   └── auth.js
 │   ├── .env
 │   ├── package.json
-│   └── server.js
+│   └── app.js
 └── frontend/
     ├── public/
     │   └── index.html
