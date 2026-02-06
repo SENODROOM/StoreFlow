@@ -1,15 +1,28 @@
 # MERN Order Management System
 
-A full-stack web application built with MongoDB, Express.js, React, and Node.js for managing customer orders and purchases.
+A full-stack web application built with MongoDB, Express.js, React, and Node.js for managing customer orders and purchases with **shopkeeper authentication**.
 
 ## Features
 
+### 🔐 Authentication & User Management
+- **Shopkeeper Registration**: Create account with shop details
+- **Secure Login**: Email and password authentication
+- **Auto Login**: Authentication token stored in localStorage - no need to login repeatedly
+- **User-Specific Data**: Each shopkeeper can only access their own orders
+- **Protected Routes**: Automatic redirect to login if not authenticated
+
+### 📦 Order Management
 - **Order Form**: Create new orders with customer details (name, phone, address, product)
 - **Real-time Data**: Orders are saved to MongoDB with exact timestamp
-- **Purchased Products Page**: View all orders as bills with complete details
+- **Purchased Products Page**: View all your orders as bills with complete details
 - **Search Functionality**: Search orders by customer name, phone, product, or address
-- **Responsive Design**: Beautiful gradient UI that works on all devices
 - **Delete Orders**: Remove orders from the database
+- **User Isolation**: Each shopkeeper sees only their own orders
+
+### 🎨 Design
+- **Responsive Design**: Beautiful gradient UI that works on all devices
+- **Modern Interface**: Clean and professional design
+- **User Info Display**: Shows shop name and owner name in navbar
 
 ## Project Structure
 
@@ -17,7 +30,10 @@ A full-stack web application built with MongoDB, Express.js, React, and Node.js 
 mern-order-system/
 ├── backend/
 │   ├── models/
-│   │   └── Order.js
+│   │   ├── Order.js
+│   │   └── User.js
+│   ├── middleware/
+│   │   └── auth.js
 │   ├── .env
 │   ├── package.json
 │   └── server.js
@@ -26,8 +42,13 @@ mern-order-system/
     │   └── index.html
     ├── src/
     │   ├── components/
+    │   │   ├── Login.js
+    │   │   ├── Register.js
     │   │   ├── OrderForm.js
-    │   │   └── PurchasedProducts.js
+    │   │   ├── PurchasedProducts.js
+    │   │   └── PrivateRoute.js
+    │   ├── context/
+    │   │   └── AuthContext.js
     │   ├── App.js
     │   ├── App.css
     │   ├── index.js
@@ -129,6 +150,29 @@ The React app will start on `http://localhost:3000` and automatically open in yo
 
 ## Using the Application
 
+### First Time Setup - Create Your Account
+
+1. Open `http://localhost:3000` in your browser
+2. You'll be redirected to the login page
+3. Click "Register here" to create a new account
+4. Fill in your shop details:
+   - Shop Name
+   - Owner Name
+   - Email (must be unique)
+   - Phone Number
+   - Shop Address
+   - Password (minimum 6 characters)
+   - Confirm Password
+5. Click "Create Account"
+6. You'll be automatically logged in and redirected to the order form
+
+### Subsequent Logins
+
+1. Open `http://localhost:3000`
+2. If your authentication token is still valid (stored in localStorage), you'll be automatically logged in
+3. If not, enter your email and password on the login page
+4. Click "Login"
+
 ### Creating an Order
 
 1. Navigate to the "New Order" page (home page)
@@ -169,28 +213,80 @@ The React app will start on `http://localhost:3000` and automatically open in yo
 2. Confirm the deletion
 3. The order will be removed from the database
 
+### Logging Out
+
+1. Click the "Logout" button in the navigation bar
+2. Your authentication token will be removed from localStorage
+3. You'll need to login again to access the system
+
+### Data Isolation
+
+- **Each shopkeeper can only see and manage their own orders**
+- Orders are linked to your user account
+- Other shopkeepers cannot access your data
+- Your authentication token is stored securely in browser localStorage
+
 ## API Endpoints
 
-### Create Order
-- **POST** `/api/orders`
+### Authentication Endpoints
+
+#### Register
+- **POST** `/api/auth/register`
 - Body:
 ```json
 {
-  "customerName": "John Doe",
+  "shopName": "My Shop",
+  "ownerName": "John Doe",
+  "email": "john@example.com",
+  "password": "password123",
+  "phone": "123-456-7890",
+  "address": "123 Main St, City, State"
+}
+```
+- Response: `{ success, message, token, user }`
+
+#### Login
+- **POST** `/api/auth/login`
+- Body:
+```json
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+- Response: `{ success, message, token, user }`
+
+#### Get Current User
+- **GET** `/api/auth/me`
+- Headers: `Authorization: Bearer <token>`
+- Response: `{ success, user }`
+
+### Order Endpoints (Protected - Require Authentication)
+
+#### Create Order
+- **POST** `/api/orders`
+- Headers: `Authorization: Bearer <token>`
+- Body:
+```json
+{
+  "customerName": "Jane Smith",
   "customerPhone": "123-456-7890",
-  "customerAddress": "123 Main St, City, State",
+  "customerAddress": "456 Oak St, City, State",
   "product": "Laptop"
 }
 ```
 
-### Get All Orders
+#### Get All Orders (User-Specific)
 - **GET** `/api/orders`
+- Headers: `Authorization: Bearer <token>`
 
-### Search Orders
+#### Search Orders (User-Specific)
 - **GET** `/api/orders/search?query=searchterm`
+- Headers: `Authorization: Bearer <token>`
 
-### Delete Order
+#### Delete Order (User-Specific)
 - **DELETE** `/api/orders/:id`
+- Headers: `Authorization: Bearer <token>`
 
 ## Technologies Used
 
@@ -199,22 +295,36 @@ The React app will start on `http://localhost:3000` and automatically open in yo
 - **Express.js**: Web application framework
 - **MongoDB**: NoSQL database
 - **Mongoose**: MongoDB object modeling
+- **bcryptjs**: Password hashing
+- **jsonwebtoken**: JWT authentication
 - **CORS**: Cross-origin resource sharing
 - **dotenv**: Environment variable management
 
 ### Frontend
 - **React**: UI library
 - **React Router DOM**: Client-side routing
+- **React Context API**: State management
 - **Axios**: HTTP client
 - **CSS3**: Styling with gradients and animations
+- **LocalStorage**: Persistent authentication
 
 ## Features Breakdown
+
+### Authentication System
+- User registration with validation
+- Secure password hashing with bcrypt
+- JWT token generation
+- Token verification middleware
+- Auto-login via localStorage
+- Protected routes
+- User-specific data isolation
 
 ### Order Form Component
 - Input validation
 - Real-time form state management
 - Success/error messaging
 - Automatic form reset after submission
+- User authentication integration
 
 ### Purchased Products Component
 - Real-time data fetching
@@ -222,6 +332,7 @@ The React app will start on `http://localhost:3000` and automatically open in yo
 - Date/time formatting
 - Responsive grid layout
 - Delete functionality with confirmation
+- User-specific order display
 
 ## Customization
 
@@ -294,6 +405,33 @@ MONGODB_URI=mongodb://localhost:27017/yourDatabaseName
 - Delete `node_modules` and `package-lock.json`
 - Run `npm install` again
 
+### Token Expired / Unauthorized
+
+**Problem**: "Invalid token" or "Access denied" errors
+
+**Solution**:
+- Logout and login again
+- Clear browser localStorage
+- Check if JWT_SECRET is set in backend `.env`
+
+### Cannot Register - Email Already Exists
+
+**Problem**: "Email already registered" error
+
+**Solution**:
+- Use a different email address
+- Or login with existing credentials
+- Or delete the user from MongoDB and re-register
+
+### Auto-login Not Working
+
+**Problem**: Still need to login after closing browser
+
+**Solution**:
+- Check browser localStorage (should have 'token' key)
+- Ensure token hasn't expired (valid for 30 days)
+- Check browser console for errors
+
 ## Production Deployment
 
 ### Backend Deployment (Heroku/Railway/Render)
@@ -325,14 +463,19 @@ npm run build
 
 ## Future Enhancements
 
-- User authentication
-- Order status tracking
+- Password reset functionality
+- Email verification
+- Profile editing
+- Order status tracking (pending, completed, cancelled)
 - Invoice generation (PDF)
 - Email notifications
 - Payment integration
 - Advanced filtering and sorting
 - Order editing capability
-- Dashboard with analytics
+- Dashboard with analytics and sales reports
+- Multi-shop management
+- Customer management system
+- Inventory tracking
 
 ## License
 
